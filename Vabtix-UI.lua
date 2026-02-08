@@ -1,3 +1,11 @@
+--[[ 
+    Modern UI Library - Ultimate Polish
+    - Modern Keybind Buttons [ Key ]
+    - Larger Window Controls
+    - Fixed Overlapping
+    - Clean Layouts
+]]
+
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
@@ -20,11 +28,12 @@ Library.Theme = {
     Accent = Color3.fromRGB(114, 137, 218), -- Blurple
     Outline = Color3.fromRGB(50, 50, 55),
     Separator = Color3.fromRGB(40, 40, 45),
-    Element = Color3.fromRGB(30, 30, 35)
+    Element = Color3.fromRGB(30, 30, 35),
+    Hover = Color3.fromRGB(40, 40, 45)
 }
 
-Library.Flags = {} -- Stores values
-Library.Components = {} -- Stores element objects for Config loading
+Library.Flags = {} 
+Library.Components = {} 
 Library.FolderName = "MyScriptConfig"
 Library.IsVisible = true
 Library.Minimized = false
@@ -32,7 +41,6 @@ Library.Settings = {SFX = true, Notifications = true, Keybind = Enum.KeyCode.Rig
 
 --// Safe Services
 local function GetParent()
-    -- Try gethui for exploits, fallback to CoreGui, then PlayerGui
     local s, p = pcall(function() return gethui() end)
     if not s then s, p = pcall(function() return game:GetService("CoreGui") end) end
     if not s then p = LocalPlayer:WaitForChild("PlayerGui") end
@@ -51,7 +59,7 @@ local function Tween(inst, info, props)
     return t
 end
 
---// Notification System (Separate GUI)
+--// Notification System
 local NotifGui = Create("ScreenGui", {
     Name = "ModernUI_Notifs", Parent = GetParent(), 
     DisplayOrder = 10000, ResetOnSpawn = false
@@ -110,12 +118,11 @@ function Library:CreateWindow(options)
     local Title = options.Name or "UI Library"
     Library.FolderName = options.ConfigFolder or "MyScriptConfig"
     
-    -- File System Checks
     if not isfolder(Library.FolderName) then makefolder(Library.FolderName) end
 
     local ScreenGui = Create("ScreenGui", { Name = Title, Parent = GetParent(), ResetOnSpawn = false, ZIndexBehavior = Enum.ZIndexBehavior.Sibling })
     
-    -- Open Button (Small button when hidden)
+    -- Open Button
     local OpenBtn = Create("TextButton", {
         Name = "OpenButton", Parent = ScreenGui, BackgroundColor3 = Library.Theme.Sidebar,
         Position = UDim2.new(0, 10, 0.5, -25), Size = UDim2.new(0, 50, 0, 50),
@@ -186,7 +193,7 @@ function Library:CreateWindow(options)
 
     Create("Frame", { Parent = Sidebar, BackgroundColor3 = Library.Theme.Separator, Position = UDim2.new(0, 10, 1, -110), Size = UDim2.new(1, -20, 0, 1), BorderSizePixel = 0 })
 
-    -- Bottom Container (Config/Settings)
+    -- Bottom Container
     local BottomContainer = Create("Frame", {
         Parent = Sidebar, BackgroundTransparency = 1,
         Position = UDim2.new(0, 0, 1, -105), Size = UDim2.new(1, 0, 0, 60)
@@ -224,31 +231,34 @@ function Library:CreateWindow(options)
         Position = UDim2.new(0, 180, 0, 0), Size = UDim2.new(1, -180, 1, 0), BorderSizePixel = 0
     })
 
-    --// Window Controls (Top Right)
+    --// Window Controls (Top Right) - Fixed Overlap & Size
     local ControlHolder = Create("Frame", {
-        Parent = MainFrame, BackgroundTransparency = 1, Position = UDim2.new(1, -90, 0, 10), Size = UDim2.new(0, 80, 0, 20)
+        Parent = MainFrame, BackgroundTransparency = 1, 
+        Position = UDim2.new(1, -100, 0, 0), Size = UDim2.new(0, 100, 0, 30)
     })
-    local ControlLayout = Create("UIListLayout", { Parent = ControlHolder, FillDirection = Enum.FillDirection.Horizontal, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 5) })
+    local ControlLayout = Create("UIListLayout", { 
+        Parent = ControlHolder, FillDirection = Enum.FillDirection.Horizontal, 
+        SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 2),
+        HorizontalAlignment = Enum.HorizontalAlignment.Right,
+        VerticalAlignment = Enum.VerticalAlignment.Center
+    })
+    Create("UIPadding", { Parent = ControlHolder, PaddingRight = UDim.new(0, 10) })
 
-    -- Hide Button (-)
-    local MinBtn = Create("TextButton", {
-        Parent = ControlHolder, BackgroundTransparency = 1, Size = UDim2.new(0, 20, 0, 20),
-        Font = Enum.Font.GothamBold, Text = "-", TextColor3 = Library.Theme.TextDark, TextSize = 18
-    })
-    -- Maximize/Collapse Button (□)
-    local MaxBtn = Create("TextButton", {
-        Parent = ControlHolder, BackgroundTransparency = 1, Size = UDim2.new(0, 20, 0, 20),
-        Font = Enum.Font.GothamBold, Text = "□", TextColor3 = Library.Theme.TextDark, TextSize = 14
-    })
-    -- Close Button (X)
-    local CloseBtn = Create("TextButton", {
-        Parent = ControlHolder, BackgroundTransparency = 1, Size = UDim2.new(0, 20, 0, 20),
-        Font = Enum.Font.GothamBold, Text = "X", TextColor3 = Library.Theme.TextDark, TextSize = 14
-    })
+    local function CreateControlBtn(text, size)
+        local Btn = Create("TextButton", {
+            Parent = ControlHolder, BackgroundTransparency = 1, Size = UDim2.new(0, 30, 0, 30),
+            Font = Enum.Font.GothamBold, Text = text, TextColor3 = Library.Theme.TextDark, TextSize = size
+        })
+        Btn.MouseEnter:Connect(function() Tween(Btn, TweenInfo.new(0.2), {TextColor3 = Library.Theme.Text}) end)
+        Btn.MouseLeave:Connect(function() Tween(Btn, TweenInfo.new(0.2), {TextColor3 = Library.Theme.TextDark}) end)
+        return Btn
+    end
+
+    local MinBtn = CreateControlBtn("-", 20)
+    local MaxBtn = CreateControlBtn("□", 14)
+    local CloseBtn = CreateControlBtn("X", 16)
 
     --// Control Logic
-    
-    -- Hide (-)
     MinBtn.MouseButton1Click:Connect(function()
         MainScale.Visible = false
         OpenBtn.Visible = true
@@ -258,23 +268,21 @@ function Library:CreateWindow(options)
         OpenBtn.Visible = false
     end)
 
-    -- Collapse (□)
     local Collapsed = false
     MaxBtn.MouseButton1Click:Connect(function()
         Collapsed = not Collapsed
         if Collapsed then
-            Tween(MainScale, TweenInfo.new(0.3), {Size = UDim2.new(0, 650, 0, 50)}) -- Header only
+            Tween(MainScale, TweenInfo.new(0.3), {Size = UDim2.new(0, 650, 0, 50)})
             Sidebar.Visible = false
             Content.Visible = false
         else
-            Tween(MainScale, TweenInfo.new(0.3), {Size = UDim2.new(0, 650, 0, 450)}) -- Full size
+            Tween(MainScale, TweenInfo.new(0.3), {Size = UDim2.new(0, 650, 0, 450)})
             task.wait(0.2)
             Sidebar.Visible = true
             Content.Visible = true
         end
     end)
 
-    -- Unload (X)
     CloseBtn.MouseButton1Click:Connect(function()
         Library.OnUnload:Fire()
         ScreenGui:Destroy()
@@ -328,7 +336,7 @@ function Library:CreateWindow(options)
             local Btn = Create("TextButton", { Parent = Frame, BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Font = Enum.Font.Gotham, Text = text, TextColor3 = Library.Theme.Text, TextSize = 13 })
             
             Btn.MouseButton1Click:Connect(function()
-                Tween(Frame, TweenInfo.new(0.1), {BackgroundColor3 = Library.Theme.Separator})
+                Tween(Frame, TweenInfo.new(0.1), {BackgroundColor3 = Library.Theme.Hover})
                 task.delay(0.1, function() Tween(Frame, TweenInfo.new(0.1), {BackgroundColor3 = Library.Theme.Element}) end)
                 Library:Notify("Button", text, "")
                 pcall(callback)
@@ -350,7 +358,15 @@ function Library:CreateWindow(options)
             local Circle = Create("Frame", { Parent = Switch, BackgroundColor3 = Color3.new(1,1,1), Position = Toggled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8), Size = UDim2.new(0, 16, 0, 16) })
             Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = Circle })
             local Trigger = Create("TextButton", { Parent = Frame, BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Text = "" })
-            local KeyLabel = Create("TextButton", { Parent = Frame, BackgroundTransparency = 1, Position = UDim2.new(1, -70, 0, 0), Size = UDim2.new(0, 20, 1, 0), Font = Enum.Font.GothamBold, Text = Key and "["..Key.."]" or "", TextColor3 = Library.Theme.TextDark, TextSize = 11 })
+            
+            -- Modern Keybind Button
+            local KeyBtn = Create("TextButton", {
+                Parent = Frame, BackgroundColor3 = Library.Theme.Main, Position = UDim2.new(1, -85, 0.5, -10),
+                Size = UDim2.new(0, 30, 0, 20), Font = Enum.Font.GothamBold,
+                Text = Key or "None", TextColor3 = Library.Theme.TextDark, TextSize = 11, AutoButtonColor = false
+            })
+            Create("UICorner", { CornerRadius = UDim.new(0, 4), Parent = KeyBtn })
+            Create("UIStroke", { Color = Library.Theme.Outline, Thickness = 1, Parent = KeyBtn })
 
             local function Update()
                 Toggled = not Toggled
@@ -365,24 +381,28 @@ function Library:CreateWindow(options)
             
             -- Keybind Logic
             local listening = false
-            KeyLabel.MouseButton1Click:Connect(function() listening = true; KeyLabel.Text = "..." end)
+            KeyBtn.MouseButton1Click:Connect(function() 
+                listening = true
+                KeyBtn.Text = "..."
+                Tween(KeyBtn, TweenInfo.new(0.2), {TextColor3 = Library.Theme.Accent})
+            end)
+            
             UserInputService.InputBegan:Connect(function(input, gpe)
                 if gpe then return end
                 if listening and input.UserInputType == Enum.UserInputType.Keyboard then
-                    Key = input.KeyCode.Name; KeyLabel.Text = "["..Key.."]"; listening = false
+                    Key = input.KeyCode.Name
+                    KeyBtn.Text = Key
+                    listening = false
+                    Tween(KeyBtn, TweenInfo.new(0.2), {TextColor3 = Library.Theme.TextDark})
                     Library:Notify("Keybind", text, Key)
                 elseif not listening and input.UserInputType == Enum.UserInputType.Keyboard and Key and input.KeyCode.Name == Key then
                     Update()
                 end
             end)
 
-            -- Store Object for Config
             Library.Components[flag] = {
                 Set = function(self, val)
-                    if val ~= Toggled then
-                        Toggled = not val -- Flip so Update flips it back
-                        Update()
-                    end
+                    if val ~= Toggled then Toggled = not val; Update() end
                 end
             }
 
