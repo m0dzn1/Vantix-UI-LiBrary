@@ -11,47 +11,34 @@ local Mouse = LocalPlayer:GetMouse()
 
 --// Signals
 Library.OnUnload = Instance.new("BindableEvent")
-
---// File System Safety
-local writefile = writefile or function(...) end
-local readfile = readfile or function(...) end
-local isfile = isfile or function(...) return false end
-local isfolder = isfolder or function(...) return false end
-local makefolder = makefolder or function(...) end
-local listfiles = listfiles or function(...) return {} end
-
---// UI Parent Check
-local function GetParent()
-    local success, result = pcall(function() return game:GetService("CoreGui") end)
-    if success then return result end
-    return LocalPlayer:WaitForChild("PlayerGui")
-end
-
---// Themes
-local Themes = {
-    Modern = {
-        Main = Color3.fromRGB(20, 20, 25),
-        Sidebar = Color3.fromRGB(15, 15, 20),
-        Content = Color3.fromRGB(20, 20, 25),
-        Text = Color3.fromRGB(240, 240, 240),
-        TextDark = Color3.fromRGB(140, 140, 140),
-        Accent = Color3.fromRGB(90, 100, 240), -- Vibrant Blurple
-        Outline = Color3.fromRGB(40, 40, 45),
-        Separator = Color3.fromRGB(35, 35, 40),
-        Element = Color3.fromRGB(25, 25, 30),
-        Hover = Color3.fromRGB(35, 35, 40)
-    }
+Library.Theme = {
+    Main = Color3.fromRGB(25, 25, 30),
+    Sidebar = Color3.fromRGB(20, 20, 25),
+    Content = Color3.fromRGB(25, 25, 30),
+    Text = Color3.fromRGB(240, 240, 240),
+    TextDark = Color3.fromRGB(140, 140, 140),
+    Accent = Color3.fromRGB(114, 137, 218), -- Blurple
+    Outline = Color3.fromRGB(50, 50, 55),
+    Separator = Color3.fromRGB(40, 40, 45),
+    Element = Color3.fromRGB(30, 30, 35)
 }
 
-Library.Theme = Themes.Modern
-Library.Flags = {}
-Library.FolderName = "ModernUIConfig"
+Library.Flags = {} -- Stores values
+Library.Components = {} -- Stores element objects for Config loading
+Library.FolderName = "MyScriptConfig"
 Library.IsVisible = true
-Library.Settings = {SFX = true, Notifications = true}
-Library.Elements = {} 
-Library.Connections = {} -- Store connections to disconnect on unload
+Library.Minimized = false
+Library.Settings = {SFX = true, Notifications = true, Keybind = Enum.KeyCode.RightControl}
 
---// Utility
+--// Safe Services
+local function GetParent()
+    -- Try gethui for exploits, fallback to CoreGui, then PlayerGui
+    local s, p = pcall(function() return gethui() end)
+    if not s then s, p = pcall(function() return game:GetService("CoreGui") end) end
+    if not s then p = LocalPlayer:WaitForChild("PlayerGui") end
+    return p
+end
+
 local function Create(class, props)
     local inst = Instance.new(class)
     for k, v in pairs(props) do inst[k] = v end
@@ -64,18 +51,15 @@ local function Tween(inst, info, props)
     return t
 end
 
-local function PlaySound(id)
-    if Library.Settings.SFX then
-        local s = Create("Sound", {SoundId = "rbxassetid://"..id, Parent = GetParent(), Volume = 1})
-        s:Play(); s.Ended:Connect(function() s:Destroy() end)
-    end
-end
-
---// Notification System
+--// Notification System (Separate GUI)
+local NotifGui = Create("ScreenGui", {
+    Name = "ModernUI_Notifs", Parent = GetParent(), 
+    DisplayOrder = 10000, ResetOnSpawn = false
+})
 local NotifHolder = Create("Frame", {
-    Name = "ModernUI_Notifications", Parent = GetParent(), BackgroundTransparency = 1,
+    Parent = NotifGui, BackgroundTransparency = 1,
     Position = UDim2.new(1, -20, 1, -20), Size = UDim2.new(0, 300, 1, 0),
-    AnchorPoint = Vector2.new(1, 1), ZIndex = 1000
+    AnchorPoint = Vector2.new(1, 1)
 })
 local NotifLayout = Create("UIListLayout", {
     Parent = NotifHolder, SortOrder = Enum.SortOrder.LayoutOrder,
@@ -96,7 +80,6 @@ function Library:Notify(title, text, duration)
         Parent = NFrame, BackgroundColor3 = Library.Theme.Accent,
         Size = UDim2.new(0, 3, 1, 0)
     })
-    Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = NBar })
 
     local NTitle = Create("TextLabel", {
         Parent = NFrame, BackgroundTransparency = 1, Position = UDim2.new(0, 15, 0, 8),
@@ -113,7 +96,6 @@ function Library:Notify(title, text, duration)
     })
 
     Tween(NFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, 50)})
-    PlaySound(4590657391)
     
     task.delay(duration or 3, function()
         if not NFrame.Parent then return end
@@ -127,10 +109,22 @@ end
 function Library:CreateWindow(options)
     local Title = options.Name or "UI Library"
     Library.FolderName = options.ConfigFolder or "MyScriptConfig"
+    
+    -- File System Checks
     if not isfolder(Library.FolderName) then makefolder(Library.FolderName) end
 
     local ScreenGui = Create("ScreenGui", { Name = Title, Parent = GetParent(), ResetOnSpawn = false, ZIndexBehavior = Enum.ZIndexBehavior.Sibling })
     
+    -- Open Button (Small button when hidden)
+    local OpenBtn = Create("TextButton", {
+        Name = "OpenButton", Parent = ScreenGui, BackgroundColor3 = Library.Theme.Sidebar,
+        Position = UDim2.new(0, 10, 0.5, -25), Size = UDim2.new(0, 50, 0, 50),
+        Font = Enum.Font.GothamBold, Text = "Open", TextColor3 = Library.Theme.Accent,
+        Visible = false, AutoButtonColor = false
+    })
+    Create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = OpenBtn })
+    Create("UIStroke", { Color = Library.Theme.Outline, Thickness = 1, Parent = OpenBtn })
+
     local MainScale = Create("Frame", {
         Name = "MainScale", Parent = ScreenGui, BackgroundTransparency = 1,
         Position = UDim2.new(0.5, -325, 0.5, -225), Size = UDim2.new(0, 650, 0, 450)
@@ -145,37 +139,36 @@ function Library:CreateWindow(options)
 
     -- Dragging
     local dragging, dragInput, dragStart, startPos
-    table.insert(Library.Connections, MainFrame.InputBegan:Connect(function(input)
+    MainFrame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true; dragStart = input.Position; startPos = MainScale.Position
         end
-    end))
-    table.insert(Library.Connections, MainFrame.InputChanged:Connect(function(input)
+    end)
+    MainFrame.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end
-    end))
-    table.insert(Library.Connections, UserInputService.InputChanged:Connect(function(input)
+    end)
+    UserInputService.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             local delta = input.Position - dragStart
             Tween(MainScale, TweenInfo.new(0.05), {Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)})
         end
-    end))
-    table.insert(Library.Connections, UserInputService.InputEnded:Connect(function(input)
+    end)
+    UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-    end))
+    end)
 
     --// Sidebar
     local Sidebar = Create("Frame", {
         Name = "Sidebar", Parent = MainFrame, BackgroundColor3 = Library.Theme.Sidebar,
         Size = UDim2.new(0, 180, 1, 0), BorderSizePixel = 0
     })
-    Create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = Sidebar })
     Create("Frame", { Parent = Sidebar, BackgroundColor3 = Library.Theme.Sidebar, Size = UDim2.new(0, 10, 1, 0), Position = UDim2.new(1, -10, 0, 0), BorderSizePixel = 0 })
 
     -- Title
     local TitleLabel = Create("TextLabel", {
         Parent = Sidebar, BackgroundTransparency = 1, Position = UDim2.new(0, 15, 0, 0),
         Size = UDim2.new(1, -15, 0, 50), Font = Enum.Font.GothamBold,
-        Text = Title, TextColor3 = Library.Theme.Text, TextSize = 18,
+        Text = Title, TextColor3 = Library.Theme.Text, TextSize = 16,
         TextXAlignment = Enum.TextXAlignment.Left
     })
     
@@ -193,7 +186,7 @@ function Library:CreateWindow(options)
 
     Create("Frame", { Parent = Sidebar, BackgroundColor3 = Library.Theme.Separator, Position = UDim2.new(0, 10, 1, -110), Size = UDim2.new(1, -20, 0, 1), BorderSizePixel = 0 })
 
-    -- Bottom Container
+    -- Bottom Container (Config/Settings)
     local BottomContainer = Create("Frame", {
         Parent = Sidebar, BackgroundTransparency = 1,
         Position = UDim2.new(0, 0, 1, -105), Size = UDim2.new(1, 0, 0, 60)
@@ -205,19 +198,15 @@ function Library:CreateWindow(options)
         Parent = Sidebar, BackgroundColor3 = Library.Theme.Main,
         Position = UDim2.new(0, 0, 1, -45), Size = UDim2.new(1, 0, 0, 45), BorderSizePixel = 0
     })
-    Create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = ProfileFrame })
-    
     local ProfileImg = Create("ImageLabel", {
         Parent = ProfileFrame, BackgroundTransparency = 1, Position = UDim2.new(0, 8, 0, 8),
         Size = UDim2.new(0, 29, 0, 29), Image = "rbxassetid://0"
     })
     Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = ProfileImg })
-    
     task.spawn(function()
         local s, img = pcall(function() return Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48) end)
         if s then ProfileImg.Image = img end
     end)
-
     local DisplayName = Create("TextLabel", {
         Parent = ProfileFrame, BackgroundTransparency = 1, Position = UDim2.new(0, 45, 0, 5),
         Size = UDim2.new(1, -50, 0, 15), Font = Enum.Font.GothamBold,
@@ -235,34 +224,63 @@ function Library:CreateWindow(options)
         Position = UDim2.new(0, 180, 0, 0), Size = UDim2.new(1, -180, 1, 0), BorderSizePixel = 0
     })
 
-    -- Close / Panic Button
-    local CloseBtn = Create("TextButton", {
-        Parent = MainFrame, BackgroundTransparency = 1, Position = UDim2.new(1, -30, 0, 10),
-        Size = UDim2.new(0, 20, 0, 20), Font = Enum.Font.GothamBold,
-        Text = "X", TextColor3 = Library.Theme.TextDark, TextSize = 14, ZIndex = 5
+    --// Window Controls (Top Right)
+    local ControlHolder = Create("Frame", {
+        Parent = MainFrame, BackgroundTransparency = 1, Position = UDim2.new(1, -90, 0, 10), Size = UDim2.new(0, 80, 0, 20)
     })
-    
-    --// Panic Logic
-    function Library:Unload()
-        Library.OnUnload:Fire() -- Signal user script to reset
-        for _, conn in pairs(Library.Connections) do conn:Disconnect() end
-        ScreenGui:Destroy()
-        NotifHolder:Destroy()
-        Library.Open = false
-    end
-    
-    CloseBtn.MouseButton1Click:Connect(function() Library:Unload() end)
+    local ControlLayout = Create("UIListLayout", { Parent = ControlHolder, FillDirection = Enum.FillDirection.Horizontal, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 5) })
 
-    function Library:ToggleUI()
-        Library.IsVisible = not Library.IsVisible
-        if Library.IsVisible then
-            MainScale.Visible = true
-            Tween(MainScale, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 650, 0, 450)})
+    -- Hide Button (-)
+    local MinBtn = Create("TextButton", {
+        Parent = ControlHolder, BackgroundTransparency = 1, Size = UDim2.new(0, 20, 0, 20),
+        Font = Enum.Font.GothamBold, Text = "-", TextColor3 = Library.Theme.TextDark, TextSize = 18
+    })
+    -- Maximize/Collapse Button (□)
+    local MaxBtn = Create("TextButton", {
+        Parent = ControlHolder, BackgroundTransparency = 1, Size = UDim2.new(0, 20, 0, 20),
+        Font = Enum.Font.GothamBold, Text = "□", TextColor3 = Library.Theme.TextDark, TextSize = 14
+    })
+    -- Close Button (X)
+    local CloseBtn = Create("TextButton", {
+        Parent = ControlHolder, BackgroundTransparency = 1, Size = UDim2.new(0, 20, 0, 20),
+        Font = Enum.Font.GothamBold, Text = "X", TextColor3 = Library.Theme.TextDark, TextSize = 14
+    })
+
+    --// Control Logic
+    
+    -- Hide (-)
+    MinBtn.MouseButton1Click:Connect(function()
+        MainScale.Visible = false
+        OpenBtn.Visible = true
+    end)
+    OpenBtn.MouseButton1Click:Connect(function()
+        MainScale.Visible = true
+        OpenBtn.Visible = false
+    end)
+
+    -- Collapse (□)
+    local Collapsed = false
+    MaxBtn.MouseButton1Click:Connect(function()
+        Collapsed = not Collapsed
+        if Collapsed then
+            Tween(MainScale, TweenInfo.new(0.3), {Size = UDim2.new(0, 650, 0, 50)}) -- Header only
+            Sidebar.Visible = false
+            Content.Visible = false
         else
-            local t = Tween(MainScale, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0)})
-            t.Completed:Connect(function() if not Library.IsVisible then MainScale.Visible = false end end)
+            Tween(MainScale, TweenInfo.new(0.3), {Size = UDim2.new(0, 650, 0, 450)}) -- Full size
+            task.wait(0.2)
+            Sidebar.Visible = true
+            Content.Visible = true
         end
-    end
+    end)
+
+    -- Unload (X)
+    CloseBtn.MouseButton1Click:Connect(function()
+        Library.OnUnload:Fire()
+        ScreenGui:Destroy()
+        NotifGui:Destroy()
+        Library.IsVisible = false
+    end)
 
     --// Tab System
     local Window = {}
@@ -310,8 +328,7 @@ function Library:CreateWindow(options)
             local Btn = Create("TextButton", { Parent = Frame, BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Font = Enum.Font.Gotham, Text = text, TextColor3 = Library.Theme.Text, TextSize = 13 })
             
             Btn.MouseButton1Click:Connect(function()
-                PlaySound(6895079853)
-                Tween(Frame, TweenInfo.new(0.1), {BackgroundColor3 = Library.Theme.Hover})
+                Tween(Frame, TweenInfo.new(0.1), {BackgroundColor3 = Library.Theme.Separator})
                 task.delay(0.1, function() Tween(Frame, TweenInfo.new(0.1), {BackgroundColor3 = Library.Theme.Element}) end)
                 Library:Notify("Button", text, "")
                 pcall(callback)
@@ -328,7 +345,6 @@ function Library:CreateWindow(options)
             Create("UIStroke", { Color = Library.Theme.Outline, Thickness = 1, Parent = Frame })
             
             local Label = Create("TextLabel", { Parent = Frame, BackgroundTransparency = 1, Position = UDim2.new(0, 10, 0, 0), Size = UDim2.new(1, -80, 1, 0), Font = Enum.Font.Gotham, Text = text, TextColor3 = Library.Theme.Text, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left })
-            
             local Switch = Create("Frame", { Parent = Frame, BackgroundColor3 = Toggled and Library.Theme.Accent or Color3.fromRGB(50,50,50), Position = UDim2.new(1, -45, 0.5, -10), Size = UDim2.new(0, 35, 0, 20) })
             Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = Switch })
             local Circle = Create("Frame", { Parent = Switch, BackgroundColor3 = Color3.new(1,1,1), Position = Toggled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8), Size = UDim2.new(0, 16, 0, 16) })
@@ -345,11 +361,12 @@ function Library:CreateWindow(options)
                 if callback then callback(Toggled) end
             end
 
-            Trigger.MouseButton1Click:Connect(function() PlaySound(6895079853); Update() end)
-
+            Trigger.MouseButton1Click:Connect(Update)
+            
+            -- Keybind Logic
             local listening = false
             KeyLabel.MouseButton1Click:Connect(function() listening = true; KeyLabel.Text = "..." end)
-            table.insert(Library.Connections, UserInputService.InputBegan:Connect(function(input, gpe)
+            UserInputService.InputBegan:Connect(function(input, gpe)
                 if gpe then return end
                 if listening and input.UserInputType == Enum.UserInputType.Keyboard then
                     Key = input.KeyCode.Name; KeyLabel.Text = "["..Key.."]"; listening = false
@@ -357,7 +374,17 @@ function Library:CreateWindow(options)
                 elseif not listening and input.UserInputType == Enum.UserInputType.Keyboard and Key and input.KeyCode.Name == Key then
                     Update()
                 end
-            end))
+            end)
+
+            -- Store Object for Config
+            Library.Components[flag] = {
+                Set = function(self, val)
+                    if val ~= Toggled then
+                        Toggled = not val -- Flip so Update flips it back
+                        Update()
+                    end
+                end
+            }
 
             if default then callback(true) end
         end
@@ -376,49 +403,26 @@ function Library:CreateWindow(options)
             Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = Fill })
             local Trigger = Create("TextButton", { Parent = Bar, BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Text = "" })
 
-            local dragging = false
-            local function Update(input)
-                local pos = math.clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
-                local val = math.floor(min + ((max - min) * pos))
-                Tween(Fill, TweenInfo.new(0.1), {Size = UDim2.new(pos, 0, 1, 0)})
+            local function Update(val)
+                local percent = (val - min) / (max - min)
+                Tween(Fill, TweenInfo.new(0.1), {Size = UDim2.new(percent, 0, 1, 0)})
                 ValLabel.Text = tostring(val)
                 Library.Flags[flag] = val
                 if callback then callback(val) end
             end
-            
-            table.insert(Library.Connections, Trigger.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true; Update(i) end end))
-            table.insert(Library.Connections, UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 and dragging then dragging = false; Library:Notify("Slider", text, Library.Flags[flag]) end end))
-            table.insert(Library.Connections, UserInputService.InputChanged:Connect(function(i) if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then Update(i) end end))
-        end
 
-        function Tab:Dropdown(text, options, default, flag, callback)
-            Library.Flags[flag] = default
-            local Dropped = false
-            local Frame = Create("Frame", { Parent = Page, BackgroundColor3 = Library.Theme.Element, Size = UDim2.new(1, 0, 0, 35), ClipsDescendants = true, ZIndex = 2 })
-            Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = Frame })
-            Create("UIStroke", { Color = Library.Theme.Outline, Thickness = 1, Parent = Frame })
-            
-            local Label = Create("TextLabel", { Parent = Frame, BackgroundTransparency = 1, Position = UDim2.new(0, 10, 0, 0), Size = UDim2.new(0, 150, 0, 35), Font = Enum.Font.Gotham, Text = text, TextColor3 = Library.Theme.Text, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left })
-            local Selected = Create("TextLabel", { Parent = Frame, BackgroundTransparency = 1, Position = UDim2.new(1, -140, 0, 0), Size = UDim2.new(0, 110, 0, 35), Font = Enum.Font.Gotham, Text = default, TextColor3 = Library.Theme.Accent, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Right })
-            local Arrow = Create("TextLabel", { Parent = Frame, BackgroundTransparency = 1, Position = UDim2.new(1, -25, 0, 0), Size = UDim2.new(0, 25, 0, 35), Font = Enum.Font.GothamBold, Text = "v", TextColor3 = Library.Theme.Text, TextSize = 14 })
-            local Trigger = Create("TextButton", { Parent = Frame, BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 35), Text = "" })
-            local List = Create("ScrollingFrame", { Parent = Frame, BackgroundTransparency = 1, Position = UDim2.new(0, 0, 0, 35), Size = UDim2.new(1, 0, 0, 100), CanvasSize = UDim2.new(0, 0, 0, 0), ScrollBarThickness = 2, AutomaticCanvasSize = Enum.AutomaticSize.Y })
-            Create("UIListLayout", { Parent = List, SortOrder = Enum.SortOrder.LayoutOrder })
-
-            local function Refresh(opts)
-                for _, v in pairs(List:GetChildren()) do if v:IsA("TextButton") then v:Destroy() end end
-                for _, opt in pairs(opts) do
-                    local Btn = Create("TextButton", { Parent = List, BackgroundColor3 = Library.Theme.Main, BackgroundTransparency = 0.5, Size = UDim2.new(1, -10, 0, 25), Font = Enum.Font.Gotham, Text = opt, TextColor3 = Library.Theme.Text, TextSize = 12 })
-                    Create("UICorner", { CornerRadius = UDim.new(0, 4), Parent = Btn })
-                    Btn.MouseButton1Click:Connect(function()
-                        Selected.Text = opt; Library.Flags[flag] = opt; Dropped = false
-                        Tween(Frame, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 35)}); Tween(Arrow, TweenInfo.new(0.2), {Rotation = 0})
-                        Library:Notify("Dropdown", text, opt); if callback then callback(opt) end
-                    end)
+            local dragging = false
+            Trigger.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end end)
+            UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false; Library:Notify("Slider", text, Library.Flags[flag]) end end)
+            UserInputService.InputChanged:Connect(function(i)
+                if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
+                    local pos = math.clamp((i.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
+                    local val = math.floor(min + ((max - min) * pos))
+                    Update(val)
                 end
-            end
-            Refresh(options)
-            Trigger.MouseButton1Click:Connect(function() Dropped = not Dropped; Tween(Frame, TweenInfo.new(0.2), {Size = Dropped and UDim2.new(1, 0, 0, 140) or UDim2.new(1, 0, 0, 35)}); Tween(Arrow, TweenInfo.new(0.2), {Rotation = Dropped and 180 or 0}) end)
+            end)
+
+            Library.Components[flag] = { Set = function(self, val) Update(val) end }
         end
 
         function Tab:Input(text, placeholder, flag, callback)
@@ -429,7 +433,14 @@ function Library:CreateWindow(options)
             local Label = Create("TextLabel", { Parent = Frame, BackgroundTransparency = 1, Position = UDim2.new(0, 10, 0, 0), Size = UDim2.new(0, 100, 1, 0), Font = Enum.Font.Gotham, Text = text, TextColor3 = Library.Theme.Text, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left })
             local Box = Create("TextBox", { Parent = Frame, BackgroundColor3 = Library.Theme.Main, Position = UDim2.new(1, -160, 0.5, -12), Size = UDim2.new(0, 150, 0, 24), Font = Enum.Font.Gotham, Text = "", PlaceholderText = placeholder, TextColor3 = Library.Theme.Text, TextSize = 12 })
             Create("UICorner", { CornerRadius = UDim.new(0, 4), Parent = Box })
-            Box.FocusLost:Connect(function() Library.Flags[flag] = Box.Text; Library:Notify("Input", text, Box.Text); if callback then callback(Box.Text) end end)
+            
+            Box.FocusLost:Connect(function()
+                Library.Flags[flag] = Box.Text
+                Library:Notify("Input", text, Box.Text)
+                if callback then callback(Box.Text) end
+            end)
+            
+            Library.Components[flag] = { Set = function(self, val) Box.Text = val; Library.Flags[flag] = val; if callback then callback(val) end end }
         end
 
         return Tab
@@ -454,7 +465,6 @@ function Library:CreateWindow(options)
     end
     RefreshConfigs()
 
-    ConfigTab:Dropdown("Select Config", ConfigList, "None", "CfgSelect", function(v) ConfigName = v end)
     ConfigTab:Button("Save Config", function()
         if ConfigName == "" then return end
         writefile(Library.FolderName.."/"..ConfigName..".json", HttpService:JSONEncode(Library.Flags))
@@ -464,7 +474,9 @@ function Library:CreateWindow(options)
     ConfigTab:Button("Load Config", function()
         if isfile(Library.FolderName.."/"..ConfigName..".json") then
             local data = HttpService:JSONDecode(readfile(Library.FolderName.."/"..ConfigName..".json"))
-            for k,v in pairs(data) do Library.Flags[k] = v end
+            for k,v in pairs(data) do 
+                if Library.Components[k] then Library.Components[k]:Set(v) end
+            end
             Library:Notify("System", "Loaded Config", ConfigName)
         end
     end)
@@ -474,6 +486,21 @@ function Library:CreateWindow(options)
     SettingsTab:Toggle("SFX", true, nil, "SFX", function(v) Library.Settings.SFX = v end)
     SettingsTab:Toggle("Notifications", true, nil, "Notifs", function(v) Library.Settings.Notifications = v end)
     
+    -- Toggle UI Keybind
+    UserInputService.InputBegan:Connect(function(input, gpe)
+        if not gpe and input.KeyCode == Library.Settings.Keybind then
+            if Library.IsVisible then
+                MainScale.Visible = false
+                OpenBtn.Visible = true
+                Library.IsVisible = false
+            else
+                MainScale.Visible = true
+                OpenBtn.Visible = false
+                Library.IsVisible = true
+            end
+        end
+    end)
+
     return Window
 end
 
