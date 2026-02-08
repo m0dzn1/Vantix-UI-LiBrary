@@ -1,9 +1,8 @@
 --[[ 
-    Modern UI Library - Ultimate Config & Theme Edition
-    - Working Save/Load Config System
-    - 10 Custom Themes
-    - Forced Settings Tab
-    - Window Controls & Sections
+    Modern UI Library - Ultimate Config Structure
+    - Folder Structure: workspace/{ScriptTitle}/Configs/
+    - Auto-Save/Load System
+    - Forced Settings & Config Tabs
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -20,7 +19,7 @@ local Mouse = LocalPlayer:GetMouse()
 --// Signals
 Library.OnUnload = Instance.new("BindableEvent")
 
---// Themes Configuration
+--// Themes
 local Themes = {
     Light = {
         Main = Color3.fromRGB(240, 240, 240), TopBar = Color3.fromRGB(255, 255, 255), Sidebar = Color3.fromRGB(225, 225, 225), Content = Color3.fromRGB(240, 240, 240),
@@ -32,42 +31,42 @@ local Themes = {
         Text = Color3.fromRGB(240, 240, 240), TextDark = Color3.fromRGB(140, 140, 140), Accent = Color3.fromRGB(114, 137, 218),
         Outline = Color3.fromRGB(50, 50, 55), Separator = Color3.fromRGB(40, 40, 45), Element = Color3.fromRGB(30, 30, 35), Hover = Color3.fromRGB(40, 40, 45)
     },
-    Midnight = { -- Pure Black (AMOLED)
+    Midnight = {
         Main = Color3.fromRGB(0, 0, 0), TopBar = Color3.fromRGB(10, 10, 10), Sidebar = Color3.fromRGB(5, 5, 5), Content = Color3.fromRGB(0, 0, 0),
         Text = Color3.fromRGB(255, 255, 255), TextDark = Color3.fromRGB(150, 150, 150), Accent = Color3.fromRGB(255, 255, 255),
         Outline = Color3.fromRGB(30, 30, 30), Separator = Color3.fromRGB(20, 20, 20), Element = Color3.fromRGB(10, 10, 10), Hover = Color3.fromRGB(20, 20, 20)
     },
-    Ruby = { -- Red Accents
+    Ruby = {
         Main = Color3.fromRGB(25, 15, 15), TopBar = Color3.fromRGB(30, 20, 20), Sidebar = Color3.fromRGB(20, 10, 10), Content = Color3.fromRGB(25, 15, 15),
         Text = Color3.fromRGB(255, 230, 230), TextDark = Color3.fromRGB(180, 140, 140), Accent = Color3.fromRGB(220, 40, 40),
         Outline = Color3.fromRGB(60, 30, 30), Separator = Color3.fromRGB(50, 25, 25), Element = Color3.fromRGB(35, 20, 20), Hover = Color3.fromRGB(45, 25, 25)
     },
-    Emerald = { -- Hacker Style
+    Emerald = {
         Main = Color3.fromRGB(10, 20, 10), TopBar = Color3.fromRGB(15, 25, 15), Sidebar = Color3.fromRGB(5, 15, 5), Content = Color3.fromRGB(10, 20, 10),
         Text = Color3.fromRGB(230, 255, 230), TextDark = Color3.fromRGB(140, 180, 140), Accent = Color3.fromRGB(0, 255, 100),
         Outline = Color3.fromRGB(30, 60, 30), Separator = Color3.fromRGB(20, 50, 20), Element = Color3.fromRGB(15, 30, 15), Hover = Color3.fromRGB(20, 40, 20)
     },
-    Ocean = { -- Deep Blue
+    Ocean = {
         Main = Color3.fromRGB(10, 15, 30), TopBar = Color3.fromRGB(15, 20, 40), Sidebar = Color3.fromRGB(5, 10, 25), Content = Color3.fromRGB(10, 15, 30),
         Text = Color3.fromRGB(230, 240, 255), TextDark = Color3.fromRGB(140, 150, 180), Accent = Color3.fromRGB(0, 180, 255),
         Outline = Color3.fromRGB(30, 50, 80), Separator = Color3.fromRGB(20, 40, 60), Element = Color3.fromRGB(15, 25, 45), Hover = Color3.fromRGB(25, 35, 55)
     },
-    Amethyst = { -- Purple
+    Amethyst = {
         Main = Color3.fromRGB(20, 15, 25), TopBar = Color3.fromRGB(25, 20, 35), Sidebar = Color3.fromRGB(15, 10, 20), Content = Color3.fromRGB(20, 15, 25),
         Text = Color3.fromRGB(245, 230, 255), TextDark = Color3.fromRGB(170, 140, 180), Accent = Color3.fromRGB(180, 100, 255),
         Outline = Color3.fromRGB(60, 40, 70), Separator = Color3.fromRGB(50, 30, 60), Element = Color3.fromRGB(30, 20, 40), Hover = Color3.fromRGB(40, 30, 50)
     },
-    Amber = { -- Orange
+    Amber = {
         Main = Color3.fromRGB(20, 15, 10), TopBar = Color3.fromRGB(25, 20, 15), Sidebar = Color3.fromRGB(15, 10, 5), Content = Color3.fromRGB(20, 15, 10),
         Text = Color3.fromRGB(255, 245, 230), TextDark = Color3.fromRGB(180, 160, 140), Accent = Color3.fromRGB(255, 140, 0),
         Outline = Color3.fromRGB(60, 50, 30), Separator = Color3.fromRGB(50, 40, 20), Element = Color3.fromRGB(30, 25, 15), Hover = Color3.fromRGB(40, 30, 20)
     },
-    Rose = { -- Pink
+    Rose = {
         Main = Color3.fromRGB(25, 20, 25), TopBar = Color3.fromRGB(30, 25, 30), Sidebar = Color3.fromRGB(20, 15, 20), Content = Color3.fromRGB(25, 20, 25),
         Text = Color3.fromRGB(255, 235, 240), TextDark = Color3.fromRGB(180, 150, 160), Accent = Color3.fromRGB(255, 105, 180),
         Outline = Color3.fromRGB(70, 40, 50), Separator = Color3.fromRGB(60, 30, 40), Element = Color3.fromRGB(35, 25, 35), Hover = Color3.fromRGB(45, 35, 45)
     },
-    Slate = { -- Grey
+    Slate = {
         Main = Color3.fromRGB(35, 35, 40), TopBar = Color3.fromRGB(40, 40, 45), Sidebar = Color3.fromRGB(30, 30, 35), Content = Color3.fromRGB(35, 35, 40),
         Text = Color3.fromRGB(230, 230, 230), TextDark = Color3.fromRGB(160, 160, 160), Accent = Color3.fromRGB(140, 150, 160),
         Outline = Color3.fromRGB(60, 60, 65), Separator = Color3.fromRGB(50, 50, 55), Element = Color3.fromRGB(45, 45, 50), Hover = Color3.fromRGB(55, 55, 60)
@@ -78,7 +77,8 @@ Library.Theme = Themes.Dark
 Library.Flags = {} 
 Library.Components = {} 
 Library.ThemeUpdates = {}
-Library.FolderName = "MyScriptConfig"
+Library.ConfigFolder = "" -- Will be set in CreateWindow
+Library.RootFolder = ""
 Library.IsVisible = true
 Library.Minimized = false
 Library.Settings = {SFX = true, Notifications = true, Keybind = Enum.KeyCode.RightControl}
@@ -155,7 +155,6 @@ function Library:Notify(title, text, duration)
         TextXAlignment = Enum.TextXAlignment.Left, TextWrapped = true
     })
 
-    -- Theme Update
     table.insert(Library.ThemeUpdates, function()
         NFrame.BackgroundColor3 = Library.Theme.Sidebar
         NStroke.Color = Library.Theme.Outline
@@ -178,9 +177,13 @@ end
 --// Main Window
 function Library:CreateWindow(options)
     local Title = options.Name or "UI Library"
-    Library.FolderName = options.ConfigFolder or "MyScriptConfig"
     
-    if not isfolder(Library.FolderName) then makefolder(Library.FolderName) end
+    --// Folder Logic
+    Library.RootFolder = Title
+    Library.ConfigFolder = Library.RootFolder .. "/Configs"
+    
+    if not isfolder(Library.RootFolder) then makefolder(Library.RootFolder) end
+    if not isfolder(Library.ConfigFolder) then makefolder(Library.ConfigFolder) end
 
     local ScreenGui = Create("ScreenGui", { Name = Title, Parent = GetParent(), ResetOnSpawn = false, ZIndexBehavior = Enum.ZIndexBehavior.Sibling })
     
@@ -212,10 +215,7 @@ function Library:CreateWindow(options)
         Size = UDim2.new(1, 0, 0, 40), BorderSizePixel = 0
     })
     Create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = TopBar })
-    Create("Frame", {
-        Parent = TopBar, BackgroundColor3 = Library.Theme.TopBar,
-        Position = UDim2.new(0, 0, 1, -10), Size = UDim2.new(1, 0, 0, 10), BorderSizePixel = 0
-    })
+    Create("Frame", { Parent = TopBar, BackgroundColor3 = Library.Theme.TopBar, Position = UDim2.new(0, 0, 1, -10), Size = UDim2.new(1, 0, 0, 10), BorderSizePixel = 0 })
 
     local TitleLabel = Create("TextLabel", {
         Parent = TopBar, BackgroundTransparency = 1, Position = UDim2.new(0, 15, 0, 0),
@@ -695,30 +695,38 @@ function Library:CreateWindow(options)
     local ConfigList = {}
     local function RefreshConfigs()
         ConfigList = {}
-        if isfolder(Library.FolderName) then
-            for _, file in pairs(listfiles(Library.FolderName)) do
+        if isfolder(Library.ConfigFolder) then
+            for _, file in pairs(listfiles(Library.ConfigFolder)) do
                 if file:sub(-5) == ".json" then table.insert(ConfigList, file:match("([^/]+)%.json$")) end
             end
         end
     end
     RefreshConfigs()
 
+    local ConfigDropdown = ConfigTab:Dropdown("Select Config", ConfigList, "None", "CfgSelect", function(v) ConfigName = v end)
+    
     ConfigTab:Button("Save Config", function()
         if ConfigName == "" then return end
-        writefile(Library.FolderName.."/"..ConfigName..".json", HttpService:JSONEncode(Library.Flags))
+        writefile(Library.ConfigFolder.."/"..ConfigName..".json", HttpService:JSONEncode(Library.Flags))
         RefreshConfigs()
+        ConfigDropdown:Refresh(ConfigList) -- Refresh dropdown options
         Library:Notify("System", "Saved Config", 2)
     end)
+    
     ConfigTab:Button("Load Config", function()
-        if isfile(Library.FolderName.."/"..ConfigName..".json") then
-            local data = HttpService:JSONDecode(readfile(Library.FolderName.."/"..ConfigName..".json"))
+        if isfile(Library.ConfigFolder.."/"..ConfigName..".json") then
+            local data = HttpService:JSONDecode(readfile(Library.ConfigFolder.."/"..ConfigName..".json"))
             for k,v in pairs(data) do 
                 if Library.Components[k] then Library.Components[k]:Set(v) end
             end
             Library:Notify("System", "Loaded Config", 2)
         end
     end)
-    ConfigTab:Button("Refresh List", RefreshConfigs)
+    
+    ConfigTab:Button("Refresh List", function()
+        RefreshConfigs()
+        ConfigDropdown:Refresh(ConfigList)
+    end)
 
     -- Settings Logic
     SettingsTab:Dropdown("Theme", {"Light", "Dark", "Midnight", "Ruby", "Emerald", "Ocean", "Amethyst", "Amber", "Rose", "Slate"}, "Dark", "Theme", function(v)
