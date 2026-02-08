@@ -1,9 +1,8 @@
 --[[ 
-    Modern UI Library - Vantix Edition
-    - Removed Theme Switching & Profile Section
-    - Added Animated "Vantix UI" Branding
-    - Modern Window Controls & Animations
-    - Realtime Config System & SFX
+    Modern UI Library - Vantix Edition (Final Polish)
+    - Bigger "VANTIX UI" Branding
+    - Modern Neon/Shimmer Color Cycle
+    - Fixed Config Loading & SFX
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -20,7 +19,7 @@ local Mouse = LocalPlayer:GetMouse()
 --// Signals
 Library.OnUnload = Instance.new("BindableEvent")
 
---// A single, clean theme is now used.
+--// Theme
 Library.Theme = {
     Main = Color3.fromRGB(25, 25, 30), 
     TopBar = Color3.fromRGB(30, 30, 35), 
@@ -294,29 +293,40 @@ function Library:CreateWindow(options)
     })
     local BottomLayout = Create("UIListLayout", { Parent = BottomContainer, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 2), HorizontalAlignment = Enum.HorizontalAlignment.Center })
 
-    --// Vantix UI Branding
+    --// Vantix UI Branding (Bigger & Neon Cycle)
     local VantixLabel = Create("TextLabel", {
         Parent = Sidebar,
         Name = "VantixLabel",
-        Text = "Vantix UI",
-        Font = Enum.Font.GothamBold,
-        TextSize = 16,
+        Text = "VANTIX UI",
+        Font = Enum.Font.GothamBlack, -- Thicker font
+        TextSize = 28, -- Bigger size
         TextColor3 = Color3.new(1, 1, 1),
         BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 0, 45),
-        Position = UDim2.new(0, 0, 1, -45)
+        Size = UDim2.new(1, 0, 0, 50),
+        Position = UDim2.new(0, 0, 1, -50)
     })
 
-    -- Color Cycle Animation
-    local whiteColor = Color3.new(1, 1, 1)
-    local greyColor = Color3.fromRGB(180, 180, 180)
+    -- Gradient for the "Shimmer" effect
+    local VantixGradient = Create("UIGradient", {
+        Parent = VantixLabel,
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0.0, Color3.new(1, 1, 1)),
+            ColorSequenceKeypoint.new(0.4, Color3.new(1, 1, 1)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(120, 120, 120)), -- Grey band
+            ColorSequenceKeypoint.new(0.6, Color3.new(1, 1, 1)),
+            ColorSequenceKeypoint.new(1.0, Color3.new(1, 1, 1))
+        }),
+        Rotation = 15
+    })
+
+    -- Animation Loop
     RunService.RenderStepped:Connect(function()
         if VantixLabel.Parent then
-            local alpha = (math.sin(tick() * 2) + 1) / 2 -- Oscillates between 0 and 1
-            VantixLabel.TextColor3 = greyColor:lerp(whiteColor, alpha)
-        else
-            -- Disconnect if the label is gone
-            -- This is a placeholder, in a real script you'd manage this connection better
+            -- Moves the gradient offset to create the cycling effect
+            -- Pattern: White -> Grey -> White
+            local speed = 1.5
+            local offset = (tick() * speed) % 3 - 1.5 
+            VantixGradient.Offset = Vector2.new(offset, 0)
         end
     end)
 
@@ -329,7 +339,7 @@ function Library:CreateWindow(options)
     Create("Frame", { Parent = Content, BackgroundColor3 = Library.Theme.Content, Size = UDim2.new(1, 0, 0, 10), Position = UDim2.new(0,0,0,0), BorderSizePixel = 0 })
     Create("Frame", { Parent = Content, BackgroundColor3 = Library.Theme.Content, Size = UDim2.new(0, 10, 1, 0), Position = UDim2.new(0,0,0,0), BorderSizePixel = 0 })
 
-    --// Theme Updater (Simplified)
+    --// Theme Updater
     function Library:UpdateTheme()
         local t = Library.Theme
         MainFrame.BackgroundColor3 = t.Main
