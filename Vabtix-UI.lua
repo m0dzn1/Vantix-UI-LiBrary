@@ -1,11 +1,3 @@
---[[ 
-    Modern UI Library - Ultimate Version
-    - Added Section/Divider Feature
-    - Fixed Slider Notification
-    - Modern Window Controls
-    - Robust Config System
-]]
-
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
