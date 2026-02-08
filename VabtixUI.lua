@@ -1,9 +1,9 @@
 --[[ 
-    Modern UI Library - Animation & Visual Update
-    - Bigger Window Control Icons
-    - Modern "Pop" Animations for Hide/Show
-    - Smooth Collapse Animation
-    - Realtime Config & Info System
+    Modern UI Library - Final Version
+    - Added Click SFX (Sound Effects)
+    - Modern Window Controls & Animations
+    - Realtime Config System
+    - Info Component
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -67,6 +67,20 @@ local function Tween(inst, info, props)
     local t = TweenService:Create(inst, info, props)
     t:Play()
     return t
+end
+
+--// Sound System
+function Library:PlaySound()
+    if Library.Settings.SFX then
+        local Sound = Instance.new("Sound")
+        Sound.Parent = GetParent()
+        Sound.SoundId = "rbxassetid://4590657391" -- Clean Click Sound
+        Sound.Volume = 1
+        Sound:Play()
+        Sound.Ended:Connect(function()
+            Sound:Destroy()
+        end)
+    end
 end
 
 --// File System
@@ -245,6 +259,8 @@ function Library:CreateWindow(options)
             }) 
         end)
         
+        Btn.MouseButton1Click:Connect(function() Library:PlaySound() end)
+
         table.insert(Library.ThemeUpdates, function() 
             if Btn.BackgroundTransparency == 1 then
                 Btn.TextColor3 = Library.Theme.TextDark 
@@ -253,7 +269,6 @@ function Library:CreateWindow(options)
         return Btn
     end
 
-    -- Increased sizes for symbols
     local MinBtn = CreateControlBtn("-", 26, false) 
     local MaxBtn = CreateControlBtn("□", 20, false) 
     local CloseBtn = CreateControlBtn("X", 16, true)
@@ -421,7 +436,11 @@ function Library:CreateWindow(options)
             Tween(TabBtn, TweenInfo.new(0.2), {TextColor3 = Library.Theme.Accent, BackgroundTransparency = isBottom and 1 or 0.95, BackgroundColor3 = Library.Theme.Accent})
         end
 
-        TabBtn.MouseButton1Click:Connect(Activate)
+        TabBtn.MouseButton1Click:Connect(function()
+            Library:PlaySound()
+            Activate()
+        end)
+        
         if FirstTab and not isBottom then FirstTab = false; Activate() end
 
         table.insert(Library.ThemeUpdates, function()
@@ -502,6 +521,7 @@ function Library:CreateWindow(options)
             local Btn = Create("TextButton", { Parent = Frame, BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Font = Enum.Font.Gotham, Text = text, TextColor3 = Library.Theme.Text, TextSize = 13 })
             
             Btn.MouseButton1Click:Connect(function()
+                Library:PlaySound()
                 Tween(Frame, TweenInfo.new(0.1), {BackgroundColor3 = Library.Theme.Hover})
                 task.delay(0.1, function() Tween(Frame, TweenInfo.new(0.1), {BackgroundColor3 = Library.Theme.Element}) end)
                 Library:Notify("Button", "Run " .. text, 2)
@@ -548,12 +568,14 @@ function Library:CreateWindow(options)
             end
 
             Trigger.MouseButton1Click:Connect(function()
+                Library:PlaySound()
                 UpdateState(not Toggled)
                 Library:Notify("Toggle", text .. ": " .. (Toggled and "On" or "Off"), 2)
             end)
             
             local listening = false
             KeyBtn.MouseButton1Click:Connect(function() 
+                Library:PlaySound()
                 listening = true
                 KeyBtn.Text = "..."
                 Tween(KeyBtn, TweenInfo.new(0.2), {TextColor3 = Library.Theme.Accent})
@@ -698,6 +720,7 @@ function Library:CreateWindow(options)
                     local Btn = Create("TextButton", { Parent = List, BackgroundColor3 = Library.Theme.Main, BackgroundTransparency = 0.5, Size = UDim2.new(1, -10, 0, 25), Font = Enum.Font.Gotham, Text = opt, TextColor3 = Library.Theme.Text, TextSize = 12 })
                     Create("UICorner", { CornerRadius = UDim.new(0, 4), Parent = Btn })
                     Btn.MouseButton1Click:Connect(function()
+                        Library:PlaySound()
                         Selected.Text = opt; Library.Flags[flag] = opt; Dropped = false
                         Tween(Frame, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 35)}); Tween(Arrow, TweenInfo.new(0.2), {Rotation = 0})
                         Library:Notify("Dropdown", "Select " .. text .. " to " .. opt, 2); if callback then callback(opt) end
@@ -705,7 +728,10 @@ function Library:CreateWindow(options)
                 end
             end
             Refresh(options)
-            Trigger.MouseButton1Click:Connect(function() Dropped = not Dropped; Tween(Frame, TweenInfo.new(0.2), {Size = Dropped and UDim2.new(1, 0, 0, 140) or UDim2.new(1, 0, 0, 35)}); Tween(Arrow, TweenInfo.new(0.2), {Rotation = Dropped and 180 or 0}) end)
+            Trigger.MouseButton1Click:Connect(function() 
+                Library:PlaySound()
+                Dropped = not Dropped; Tween(Frame, TweenInfo.new(0.2), {Size = Dropped and UDim2.new(1, 0, 0, 140) or UDim2.new(1, 0, 0, 35)}); Tween(Arrow, TweenInfo.new(0.2), {Rotation = Dropped and 180 or 0}) 
+            end)
 
             table.insert(Library.ThemeUpdates, function()
                 Frame.BackgroundColor3 = Library.Theme.Element
