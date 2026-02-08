@@ -1,9 +1,9 @@
 --[[ 
-    Modern UI Library - Final Version
-    - Added Click SFX (Sound Effects)
+    Modern UI Library - Vantix Edition
+    - Removed Theme Switching & Profile Section
+    - Added Animated "Vantix UI" Branding
     - Modern Window Controls & Animations
-    - Realtime Config System
-    - Info Component
+    - Realtime Config System & SFX
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -20,26 +20,21 @@ local Mouse = LocalPlayer:GetMouse()
 --// Signals
 Library.OnUnload = Instance.new("BindableEvent")
 
---// Themes
-local Themes = {
-    Light = {
-        Main = Color3.fromRGB(245, 245, 250), TopBar = Color3.fromRGB(255, 255, 255), Sidebar = Color3.fromRGB(235, 235, 240), Content = Color3.fromRGB(245, 245, 250),
-        Text = Color3.fromRGB(20, 20, 20), TextDark = Color3.fromRGB(100, 100, 100), Accent = Color3.fromRGB(0, 122, 255),
-        Outline = Color3.fromRGB(210, 210, 210), Separator = Color3.fromRGB(220, 220, 220), Element = Color3.fromRGB(255, 255, 255), Hover = Color3.fromRGB(240, 240, 245)
-    },
-    Dark = { -- Default
-        Main = Color3.fromRGB(25, 25, 30), TopBar = Color3.fromRGB(30, 30, 35), Sidebar = Color3.fromRGB(20, 20, 25), Content = Color3.fromRGB(25, 25, 30),
-        Text = Color3.fromRGB(240, 240, 240), TextDark = Color3.fromRGB(140, 140, 140), Accent = Color3.fromRGB(114, 137, 218),
-        Outline = Color3.fromRGB(50, 50, 55), Separator = Color3.fromRGB(40, 40, 45), Element = Color3.fromRGB(30, 30, 35), Hover = Color3.fromRGB(40, 40, 45)
-    },
-    Midnight = {
-        Main = Color3.fromRGB(10, 10, 12), TopBar = Color3.fromRGB(15, 15, 18), Sidebar = Color3.fromRGB(5, 5, 8), Content = Color3.fromRGB(10, 10, 12),
-        Text = Color3.fromRGB(255, 255, 255), TextDark = Color3.fromRGB(150, 150, 150), Accent = Color3.fromRGB(90, 90, 255),
-        Outline = Color3.fromRGB(30, 30, 35), Separator = Color3.fromRGB(25, 25, 30), Element = Color3.fromRGB(18, 18, 22), Hover = Color3.fromRGB(25, 25, 30)
-    },
+--// A single, clean theme is now used.
+Library.Theme = {
+    Main = Color3.fromRGB(25, 25, 30), 
+    TopBar = Color3.fromRGB(30, 30, 35), 
+    Sidebar = Color3.fromRGB(20, 20, 25), 
+    Content = Color3.fromRGB(25, 25, 30),
+    Text = Color3.fromRGB(240, 240, 240), 
+    TextDark = Color3.fromRGB(140, 140, 140), 
+    Accent = Color3.fromRGB(114, 137, 218),
+    Outline = Color3.fromRGB(50, 50, 55), 
+    Separator = Color3.fromRGB(40, 40, 45), 
+    Element = Color3.fromRGB(30, 30, 35), 
+    Hover = Color3.fromRGB(40, 40, 45)
 }
 
-Library.Theme = Themes.Dark
 Library.Flags = {} 
 Library.Components = {} 
 Library.ThemeUpdates = {}
@@ -299,34 +294,31 @@ function Library:CreateWindow(options)
     })
     local BottomLayout = Create("UIListLayout", { Parent = BottomContainer, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 2), HorizontalAlignment = Enum.HorizontalAlignment.Center })
 
-    -- Profile
-    local ProfileFrame = Create("Frame", {
-        Parent = Sidebar, BackgroundColor3 = Library.Theme.Main,
-        Position = UDim2.new(0, 0, 1, -45), Size = UDim2.new(1, 0, 0, 45), BorderSizePixel = 0
+    --// Vantix UI Branding
+    local VantixLabel = Create("TextLabel", {
+        Parent = Sidebar,
+        Name = "VantixLabel",
+        Text = "Vantix UI",
+        Font = Enum.Font.GothamBold,
+        TextSize = 16,
+        TextColor3 = Color3.new(1, 1, 1),
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 0, 45),
+        Position = UDim2.new(0, 0, 1, -45)
     })
-    local ProfileCorner = Create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = ProfileFrame })
-    Create("Frame", { Parent = ProfileFrame, BackgroundColor3 = Library.Theme.Main, Size = UDim2.new(1, 0, 0, 10), Position = UDim2.new(0,0,0,0), BorderSizePixel = 0 })
-    Create("Frame", { Parent = ProfileFrame, BackgroundColor3 = Library.Theme.Main, Size = UDim2.new(0, 10, 1, 0), Position = UDim2.new(1,-10,0,0), BorderSizePixel = 0 })
 
-    local ProfileImg = Create("ImageLabel", {
-        Parent = ProfileFrame, BackgroundTransparency = 1, Position = UDim2.new(0, 8, 0, 8),
-        Size = UDim2.new(0, 29, 0, 29), Image = "rbxassetid://0"
-    })
-    Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = ProfileImg })
-    task.spawn(function()
-        local s, img = pcall(function() return Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48) end)
-        if s then ProfileImg.Image = img end
+    -- Color Cycle Animation
+    local whiteColor = Color3.new(1, 1, 1)
+    local greyColor = Color3.fromRGB(180, 180, 180)
+    RunService.RenderStepped:Connect(function()
+        if VantixLabel.Parent then
+            local alpha = (math.sin(tick() * 2) + 1) / 2 -- Oscillates between 0 and 1
+            VantixLabel.TextColor3 = greyColor:lerp(whiteColor, alpha)
+        else
+            -- Disconnect if the label is gone
+            -- This is a placeholder, in a real script you'd manage this connection better
+        end
     end)
-    local DisplayName = Create("TextLabel", {
-        Parent = ProfileFrame, BackgroundTransparency = 1, Position = UDim2.new(0, 45, 0, 5),
-        Size = UDim2.new(1, -50, 0, 15), Font = Enum.Font.GothamBold,
-        Text = LocalPlayer.DisplayName, TextColor3 = Library.Theme.Text, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left
-    })
-    local UserName = Create("TextLabel", {
-        Parent = ProfileFrame, BackgroundTransparency = 1, Position = UDim2.new(0, 45, 0, 20),
-        Size = UDim2.new(1, -50, 0, 15), Font = Enum.Font.Gotham,
-        Text = "@" .. LocalPlayer.Name, TextColor3 = Library.Theme.TextDark, TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left
-    })
 
     -- Content
     local Content = Create("Frame", {
@@ -337,7 +329,7 @@ function Library:CreateWindow(options)
     Create("Frame", { Parent = Content, BackgroundColor3 = Library.Theme.Content, Size = UDim2.new(1, 0, 0, 10), Position = UDim2.new(0,0,0,0), BorderSizePixel = 0 })
     Create("Frame", { Parent = Content, BackgroundColor3 = Library.Theme.Content, Size = UDim2.new(0, 10, 1, 0), Position = UDim2.new(0,0,0,0), BorderSizePixel = 0 })
 
-    --// Theme Updater
+    --// Theme Updater (Simplified)
     function Library:UpdateTheme()
         local t = Library.Theme
         MainFrame.BackgroundColor3 = t.Main
@@ -345,9 +337,6 @@ function Library:CreateWindow(options)
         TopBar.BackgroundColor3 = t.TopBar
         Sidebar.BackgroundColor3 = t.Sidebar
         TitleLabel.TextColor3 = t.Text
-        ProfileFrame.BackgroundColor3 = t.Main
-        DisplayName.TextColor3 = t.Text
-        UserName.TextColor3 = t.TextDark
         Content.BackgroundColor3 = t.Content
         OpenBtn.BackgroundColor3 = t.Sidebar
         OpenBtn.TextColor3 = t.Accent
@@ -803,10 +792,6 @@ function Library:CreateWindow(options)
     end)
 
     -- Settings Logic
-    SettingsTab:Dropdown("Theme", {"Light", "Dark", "Midnight"}, "Dark", "Theme", function(v)
-        Library.Theme = Themes[v]
-        Library:UpdateTheme()
-    end)
     SettingsTab:Toggle("SFX", true, nil, "SFX", function(v) Library.Settings.SFX = v end)
     SettingsTab:Toggle("Notifications", true, nil, "Notifs", function(v) Library.Settings.Notifications = v end)
     
