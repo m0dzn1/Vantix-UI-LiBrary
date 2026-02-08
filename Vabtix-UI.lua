@@ -1,9 +1,9 @@
 --[[ 
-    Modern UI Library - Clean, Modern & Fixed
-    - Fixed Config Loading (Sliders/Toggles apply correctly)
-    - Modern Window Controls (Windows 11 Style)
-    - Realtime Config Refresh
-    - Folder Structure: workspace/{Title}/Configs/
+    Modern UI Library - Final Polish
+    - Added Info Component
+    - Rounded & Bigger Window Controls
+    - Smooth Hide/Show Animations
+    - Realtime Config System
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -37,7 +37,6 @@ local Themes = {
         Text = Color3.fromRGB(255, 255, 255), TextDark = Color3.fromRGB(150, 150, 150), Accent = Color3.fromRGB(90, 90, 255),
         Outline = Color3.fromRGB(30, 30, 35), Separator = Color3.fromRGB(25, 25, 30), Element = Color3.fromRGB(18, 18, 22), Hover = Color3.fromRGB(25, 25, 30)
     },
-    -- Add other themes here (Ruby, Emerald, etc.) as defined previously
 }
 
 Library.Theme = Themes.Dark
@@ -186,7 +185,7 @@ function Library:CreateWindow(options)
 
     local TitleLabel = Create("TextLabel", {
         Parent = TopBar, BackgroundTransparency = 1, Position = UDim2.new(0, 15, 0, 0),
-        Size = UDim2.new(1, -120, 1, 0), Font = Enum.Font.GothamBold,
+        Size = UDim2.new(1, -130, 1, 0), Font = Enum.Font.GothamBold,
         Text = Title, TextColor3 = Library.Theme.Text, TextSize = 16,
         TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd
     })
@@ -214,21 +213,22 @@ function Library:CreateWindow(options)
     --// Modern Window Controls
     local ControlHolder = Create("Frame", {
         Parent = TopBar, BackgroundTransparency = 1, 
-        Position = UDim2.new(1, -120, 0, 0), Size = UDim2.new(0, 120, 1, 0)
+        Position = UDim2.new(1, -115, 0, 5), Size = UDim2.new(0, 110, 0, 30)
     })
     local ControlLayout = Create("UIListLayout", { 
         Parent = ControlHolder, FillDirection = Enum.FillDirection.Horizontal, 
-        SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 0),
+        SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 5),
         HorizontalAlignment = Enum.HorizontalAlignment.Right,
         VerticalAlignment = Enum.VerticalAlignment.Center
     })
     
     local function CreateControlBtn(text, size, isClose)
         local Btn = Create("TextButton", {
-            Parent = ControlHolder, BackgroundTransparency = 1, Size = UDim2.new(0, 40, 1, 0),
-            Font = Enum.Font.Gotham, Text = text, TextColor3 = Library.Theme.TextDark, TextSize = size,
+            Parent = ControlHolder, BackgroundTransparency = 1, Size = UDim2.new(0, 30, 0, 30),
+            Font = Enum.Font.GothamBold, Text = text, TextColor3 = Library.Theme.TextDark, TextSize = size,
             AutoButtonColor = false
         })
+        Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = Btn }) -- Smooth Edges
         
         Btn.MouseEnter:Connect(function() 
             Tween(Btn, TweenInfo.new(0.2), {
@@ -253,8 +253,8 @@ function Library:CreateWindow(options)
         return Btn
     end
 
-    local MinBtn = CreateControlBtn("-", 24, false)
-    local MaxBtn = CreateControlBtn("□", 16, false)
+    local MinBtn = CreateControlBtn("-", 22, false) -- Bigger Symbol
+    local MaxBtn = CreateControlBtn("□", 16, false) -- Bigger Symbol
     local CloseBtn = CreateControlBtn("X", 16, true)
 
     --// Sidebar
@@ -420,6 +420,26 @@ function Library:CreateWindow(options)
         local Tab = {}
 
         --// Components
+        function Tab:Info(text)
+            local Frame = Create("Frame", { Parent = Page, BackgroundColor3 = Library.Theme.Element, Size = UDim2.new(1, 0, 0, 30) })
+            Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = Frame })
+            local Stroke = Create("UIStroke", { Color = Library.Theme.Outline, Thickness = 1, Parent = Frame })
+            
+            local Label = Create("TextLabel", {
+                Parent = Frame, BackgroundTransparency = 1,
+                Position = UDim2.new(0, 10, 0, 0), Size = UDim2.new(1, -20, 1, 0),
+                Font = Enum.Font.Gotham, Text = "Info: " .. text,
+                TextColor3 = Library.Theme.Accent, TextSize = 12,
+                TextXAlignment = Enum.TextXAlignment.Left, TextWrapped = true
+            })
+
+            table.insert(Library.ThemeUpdates, function()
+                Frame.BackgroundColor3 = Library.Theme.Element
+                Stroke.Color = Library.Theme.Outline
+                Label.TextColor3 = Library.Theme.Accent
+            end)
+        end
+
         function Tab:Section(text)
             local SectionFrame = Create("Frame", {
                 Parent = Page, BackgroundTransparency = 1,
@@ -699,6 +719,8 @@ function Library:CreateWindow(options)
     local SettingsTab = Window:Tab("Settings", true)
 
     -- Config Logic
+    ConfigTab:Info("Config System not working 100%")
+    
     local ConfigName = ""
     ConfigTab:Input("Config Name", "Type name...", "CfgName", function(v) ConfigName = v end)
     
