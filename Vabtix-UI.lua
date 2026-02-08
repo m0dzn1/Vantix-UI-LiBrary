@@ -1,9 +1,9 @@
 --[[ 
-    Modern UI Library - Final Polish
-    - Added Info Component
-    - Rounded & Bigger Window Controls
-    - Smooth Hide/Show Animations
-    - Realtime Config System
+    Modern UI Library - Animation & Visual Update
+    - Bigger Window Control Icons
+    - Modern "Pop" Animations for Hide/Show
+    - Smooth Collapse Animation
+    - Realtime Config & Info System
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -158,10 +158,10 @@ function Library:CreateWindow(options)
         Name = "OpenButton", Parent = ScreenGui, BackgroundColor3 = Library.Theme.Sidebar,
         Position = UDim2.new(0, 10, 0.5, -25), Size = UDim2.new(0, 50, 0, 50),
         Font = Enum.Font.GothamBold, Text = "Open", TextColor3 = Library.Theme.Accent,
-        Visible = false, AutoButtonColor = false
+        Visible = false, AutoButtonColor = false, BackgroundTransparency = 1, TextTransparency = 1
     })
     Create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = OpenBtn })
-    local OpenStroke = Create("UIStroke", { Color = Library.Theme.Outline, Thickness = 1, Parent = OpenBtn })
+    local OpenStroke = Create("UIStroke", { Color = Library.Theme.Outline, Thickness = 1, Parent = OpenBtn, Transparency = 1 })
 
     local MainScale = Create("Frame", {
         Name = "MainScale", Parent = ScreenGui, BackgroundTransparency = 1,
@@ -213,7 +213,7 @@ function Library:CreateWindow(options)
     --// Modern Window Controls
     local ControlHolder = Create("Frame", {
         Parent = TopBar, BackgroundTransparency = 1, 
-        Position = UDim2.new(1, -115, 0, 5), Size = UDim2.new(0, 110, 0, 30)
+        Position = UDim2.new(1, -120, 0, 5), Size = UDim2.new(0, 115, 0, 30)
     })
     local ControlLayout = Create("UIListLayout", { 
         Parent = ControlHolder, FillDirection = Enum.FillDirection.Horizontal, 
@@ -228,7 +228,7 @@ function Library:CreateWindow(options)
             Font = Enum.Font.GothamBold, Text = text, TextColor3 = Library.Theme.TextDark, TextSize = size,
             AutoButtonColor = false
         })
-        Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = Btn }) -- Smooth Edges
+        Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = Btn })
         
         Btn.MouseEnter:Connect(function() 
             Tween(Btn, TweenInfo.new(0.2), {
@@ -253,8 +253,9 @@ function Library:CreateWindow(options)
         return Btn
     end
 
-    local MinBtn = CreateControlBtn("-", 22, false) -- Bigger Symbol
-    local MaxBtn = CreateControlBtn("□", 16, false) -- Bigger Symbol
+    -- Increased sizes for symbols
+    local MinBtn = CreateControlBtn("-", 26, false) 
+    local MaxBtn = CreateControlBtn("□", 20, false) 
     local CloseBtn = CreateControlBtn("X", 16, true)
 
     --// Sidebar
@@ -340,25 +341,40 @@ function Library:CreateWindow(options)
         for _, func in pairs(Library.ThemeUpdates) do func() end
     end
 
-    --// Control Logic
+    --// Control Logic (Modern Animations)
+    local function ToggleUI(visible)
+        if visible then
+            MainScale.Visible = true
+            OpenBtn.Visible = false
+            Tween(MainScale, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 650, 0, 450)})
+            Tween(OpenBtn, TweenInfo.new(0.3), {BackgroundTransparency = 1, TextTransparency = 1})
+            Tween(OpenStroke, TweenInfo.new(0.3), {Transparency = 1})
+        else
+            local t = Tween(MainScale, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0)})
+            OpenBtn.Visible = true
+            Tween(OpenBtn, TweenInfo.new(0.3), {BackgroundTransparency = 0, TextTransparency = 0})
+            Tween(OpenStroke, TweenInfo.new(0.3), {Transparency = 0})
+            t.Completed:Wait()
+            MainScale.Visible = false
+        end
+    end
+
     MinBtn.MouseButton1Click:Connect(function()
-        MainScale.Visible = false
-        OpenBtn.Visible = true
+        ToggleUI(false)
     end)
     OpenBtn.MouseButton1Click:Connect(function()
-        MainScale.Visible = true
-        OpenBtn.Visible = false
+        ToggleUI(true)
     end)
 
     local Collapsed = false
     MaxBtn.MouseButton1Click:Connect(function()
         Collapsed = not Collapsed
         if Collapsed then
-            Tween(MainScale, TweenInfo.new(0.3), {Size = UDim2.new(0, 650, 0, 40)})
+            Tween(MainScale, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(0, 650, 0, 40)})
             Sidebar.Visible = false
             Content.Visible = false
         else
-            Tween(MainScale, TweenInfo.new(0.3), {Size = UDim2.new(0, 650, 0, 450)})
+            Tween(MainScale, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(0, 650, 0, 450)})
             task.wait(0.2)
             Sidebar.Visible = true
             Content.Visible = true
