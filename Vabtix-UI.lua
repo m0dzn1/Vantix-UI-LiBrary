@@ -1,8 +1,8 @@
 --[[ 
-    Modern UI Library - Ultimate Config Structure
+    Modern UI Library - Realtime Config System
     - Folder Structure: workspace/{ScriptTitle}/Configs/
+    - Realtime Dropdown Refresh
     - Auto-Save/Load System
-    - Forced Settings & Config Tabs
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -77,7 +77,7 @@ Library.Theme = Themes.Dark
 Library.Flags = {} 
 Library.Components = {} 
 Library.ThemeUpdates = {}
-Library.ConfigFolder = "" -- Will be set in CreateWindow
+Library.ConfigFolder = "" 
 Library.RootFolder = ""
 Library.IsVisible = true
 Library.Minimized = false
@@ -679,6 +679,13 @@ function Library:CreateWindow(options)
                 Selected.TextColor3 = Library.Theme.Accent
                 Arrow.TextColor3 = Library.Theme.Text
             end)
+
+            -- Return object with Refresh method
+            return {
+                Refresh = function(self, newOpts)
+                    Refresh(newOpts)
+                end
+            }
         end
 
         return Tab
@@ -709,7 +716,7 @@ function Library:CreateWindow(options)
         if ConfigName == "" then return end
         writefile(Library.ConfigFolder.."/"..ConfigName..".json", HttpService:JSONEncode(Library.Flags))
         RefreshConfigs()
-        ConfigDropdown:Refresh(ConfigList) -- Refresh dropdown options
+        ConfigDropdown:Refresh(ConfigList) -- Realtime Update
         Library:Notify("System", "Saved Config", 2)
     end)
     
